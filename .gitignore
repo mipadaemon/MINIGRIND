@@ -1,0 +1,5 @@
+grind_env/
+data/
+images/
+__pycache__/
+*.pyc
