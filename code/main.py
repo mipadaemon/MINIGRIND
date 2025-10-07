@@ -7,7 +7,7 @@ from datetime import datetime
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
     QLabel, QListWidget, QAbstractItemView, QMessageBox, QDialog, QComboBox,
-    QFileDialog, QFormLayout
+    QFileDialog, QFormLayout, QCheckBox
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor
@@ -48,42 +48,100 @@ class Task:
 
 # --------------------- Settings Dialog ---------------------
 class SettingsDialog(QDialog):
-    def __init__(self, parent=None, current_folder="", current_theme="System"):
+    def __init__(self, parent=None, current_folder="", current_theme="System", predefined_tasks=None, auto_load_predefined=True):
         super().__init__(parent)
         self.setWindowTitle("Instellingen")
         self.setModal(True)
-        self.resize(400, 150)
+        self.resize(400, 350)
 
         self.export_folder = current_folder
         self.theme = current_theme
+        self.predefined_tasks = predefined_tasks or []
+        self.auto_load_predefined = auto_load_predefined
 
-        layout = QFormLayout(self)
+        layout = QVBoxLayout(self)
 
+        # ---- Export folder ----
+        folder_layout = QHBoxLayout()
         self.folder_input = QLineEdit(self.export_folder)
         self.browse_btn = QPushButton("Bladeren...")
-        folder_layout = QHBoxLayout()
         folder_layout.addWidget(self.folder_input)
         folder_layout.addWidget(self.browse_btn)
-        layout.addRow("CSV Export Folder:", folder_layout)
+        layout.addLayout(folder_layout)
         self.browse_btn.clicked.connect(self.browse_folder)
 
+        # Disable auto default behavior
+        for btn in [self.browse_btn]:
+            btn.setAutoDefault(False)
+            btn.setDefault(False)
+
+        # ---- Theme ----
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["System", "Light", "Dark"])
         self.theme_combo.setCurrentText(self.theme)
-        layout.addRow("Theme:", self.theme_combo)
+        layout.addWidget(QLabel("Thema:"))
+        layout.addWidget(self.theme_combo)
 
+        # ---- Predefined tasks ----
+        layout.addWidget(QLabel("Voorgedefinieerde taken:"))
+        self.task_list = QListWidget()
+        self.task_list.addItems(self.predefined_tasks)
+        layout.addWidget(self.task_list)
+
+        btn_task_layout = QHBoxLayout()
+        self.new_task_input = QLineEdit()
+        self.new_task_input.setPlaceholderText("Nieuwe taaknaam...")
+        self.add_task_btn = QPushButton("Toevoegen")
+        self.remove_task_btn = QPushButton("Verwijderen")
+        btn_task_layout.addWidget(self.new_task_input)
+        btn_task_layout.addWidget(self.add_task_btn)
+        btn_task_layout.addWidget(self.remove_task_btn)
+        layout.addLayout(btn_task_layout)
+
+        self.add_task_btn.clicked.connect(self.add_task)
+        self.remove_task_btn.clicked.connect(self.remove_task)
+        self.new_task_input.returnPressed.connect(self.add_task)
+
+        for btn in [self.add_task_btn, self.remove_task_btn]:
+            btn.setAutoDefault(False)
+            btn.setDefault(False)
+
+        # ---- Checkbox for auto load ----
+        self.auto_load_checkbox = QCheckBox("Laad voorgedefinieerde taken automatisch bij opstarten")
+        self.auto_load_checkbox.setChecked(self.auto_load_predefined)
+        layout.addWidget(self.auto_load_checkbox)
+
+        # ---- Save ----
         self.save_btn = QPushButton("Opslaan")
-        layout.addRow(self.save_btn)
+        layout.addWidget(self.save_btn)
         self.save_btn.clicked.connect(self.accept)
+        self.save_btn.setAutoDefault(False)
+        self.save_btn.setDefault(False)
 
     def browse_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Kies map")
         if folder:
             self.folder_input.setText(folder)
 
+    def add_task(self):
+        name = self.new_task_input.text().strip()
+        if name and name not in [self.task_list.item(i).text() for i in range(self.task_list.count())]:
+            self.task_list.addItem(name)
+            self.new_task_input.clear()
+
+    def remove_task(self):
+        selected = self.task_list.currentItem()
+        if selected:
+            self.task_list.takeItem(self.task_list.row(selected))
+
     def get_settings(self):
-        return {"export_folder": self.folder_input.text(),
-                "theme": self.theme_combo.currentText()}
+        tasks = [self.task_list.item(i).text() for i in range(self.task_list.count())]
+        return {
+            "export_folder": self.folder_input.text(),
+            "theme": self.theme_combo.currentText(),
+            "predefined_tasks": tasks,
+            "auto_load_predefined": self.auto_load_checkbox.isChecked()
+        }
 
 # --------------------- Task Manager ---------------------
 class TaskManager(QWidget):
@@ -94,7 +152,7 @@ class TaskManager(QWidget):
 
         self.tasks = []
         self.current_task = None
-        self.settings = {"export_folder": "", "theme": "System"}
+        self.settings = {"export_folder": "", "theme": "System", "predefined_tasks": [], "auto_load_predefined": True}
         self.load_settings()
 
         self.layout = QVBoxLayout(self)
@@ -118,7 +176,12 @@ class TaskManager(QWidget):
         self.task_input.setPlaceholderText("Nieuwe taak...")
         self.add_btn = QPushButton("Toevoegen")
         self.remove_btn = QPushButton("Verwijderen")
-        self.settings_btn = QPushButton("Instellingen")
+
+        # ⚙️ Settings button (Unicode gear)
+        self.settings_btn = QPushButton("⚙️")
+        self.settings_btn.setToolTip("Instellingen")
+        self.settings_btn.setFixedWidth(35)
+
         input_layout.addWidget(self.task_input)
         input_layout.addWidget(self.add_btn)
         input_layout.addWidget(self.remove_btn)
@@ -153,7 +216,7 @@ class TaskManager(QWidget):
         self.task_list.itemSelectionChanged.connect(self.update_task_highlight)
         self.mini_mode_btn.clicked.connect(self.toggle_mini_mode)
 
-        self.is_mini_mode = False  # mini mode state
+        self.is_mini_mode = False
 
         # ----------------- Timer -----------------
         self.timer = QTimer()
@@ -161,6 +224,10 @@ class TaskManager(QWidget):
         self.timer.start(1000)
 
         self.apply_theme(self.settings.get("theme", "System"))
+
+        # Load predefined tasks (if enabled)
+        if self.settings.get("auto_load_predefined", True):
+            self.load_predefined_tasks()
 
     # ----------------- Task operations -----------------
     def add_task(self):
@@ -212,9 +279,9 @@ class TaskManager(QWidget):
         for i in range(self.task_list.count()):
             item = self.task_list.item(i)
             if self.current_task and item.text() == self.current_task.name:
-                item.setBackground(QColor("#00FF00"))  # active
+                item.setBackground(QColor("#00FF00"))
             elif item.isSelected():
-                item.setBackground(QColor("#3399FF"))  # selected
+                item.setBackground(QColor("#3399FF"))
             else:
                 item.setBackground(QColor("transparent"))
 
@@ -229,31 +296,51 @@ class TaskManager(QWidget):
     # ----------------- CSV export -----------------
     def export_csv(self):
         if not self.tasks:
+            QMessageBox.information(self, "Geen taken", "Er zijn geen taken om te exporteren.")
             return
+
         today = datetime.now()
         weekday_name = WEEKDAYS[today.weekday()]
-        filename = f"{weekday_name}, {today.strftime('%d.%m.%Y')}_tasks_day.csv"
+        timestamp = today.strftime("%H-%M-%S")
+        filename = f"{weekday_name}, {today.strftime('%d.%m.%Y')}_{timestamp}_tasks_day.csv"
         export_path = self.settings["export_folder"] if self.settings["export_folder"] else "."
         full_path = os.path.join(export_path, filename)
+
         try:
             with open(full_path, "w", newline="") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Taak", "Tijd (HH:MM:SS)"])
                 for task in self.tasks:
                     writer.writerow([task.name, task.get_time_str()])
-            QMessageBox.information(self, "Exporteren", f"CSV opgeslagen als {full_path}")
+            QMessageBox.information(self, "Exporteren", f"CSV opgeslagen als:\n{full_path}")
         except Exception as e:
             QMessageBox.warning(self, "Fout", f"Kon CSV niet opslaan:\n{e}")
 
     # ----------------- Settings -----------------
     def open_settings(self):
-        dlg = SettingsDialog(self,
-                             current_folder=self.settings.get("export_folder", ""),
-                             current_theme=self.settings.get("theme", "System"))
+        dlg = SettingsDialog(
+            self,
+            current_folder=self.settings.get("export_folder", ""),
+            current_theme=self.settings.get("theme", "System"),
+            predefined_tasks=self.settings.get("predefined_tasks", []),
+            auto_load_predefined=self.settings.get("auto_load_predefined", True)
+        )
         if dlg.exec() == QDialog.Accepted:
             self.settings.update(dlg.get_settings())
             self.apply_theme(self.settings["theme"])
             self.save_settings()
+            if self.settings.get("auto_load_predefined", True):
+                self.load_predefined_tasks()
+
+    def load_predefined_tasks(self):
+        predefined = self.settings.get("predefined_tasks", [])
+        if predefined:
+            self.task_list.clear()
+            self.tasks = []
+            for name in predefined:
+                task = Task(name)
+                self.tasks.append(task)
+                self.task_list.addItem(task.name)
 
     def apply_theme(self, theme):
         if theme == "Dark":
@@ -266,7 +353,6 @@ class TaskManager(QWidget):
     # ----------------- Mini Mode -----------------
     def toggle_mini_mode(self):
         if not self.is_mini_mode:
-            # Enter mini mode
             self.setFixedSize(300, 80)
             self.task_input.hide()
             self.task_list.hide()
@@ -277,31 +363,27 @@ class TaskManager(QWidget):
             self.pause_btn.hide()
             self.export_btn.hide()
             self.mini_mode_btn.hide()
-            
-            # Recreate layout as horizontal
+
             old_layout = self.compact_panel.layout()
             if old_layout:
-                # Remove widgets from layout but don't delete them
                 while old_layout.count():
                     item = old_layout.takeAt(0)
                     if item.widget():
                         item.widget().setParent(None)
-                # Delete the old layout
                 QWidget().setLayout(old_layout)
-            
+
             new_layout = QHBoxLayout(self.compact_panel)
             new_layout.addWidget(self.active_task_label)
             new_layout.addWidget(self.timer_label)
-            
+
             self.timer_label.setStyleSheet("font-size: 16px; margin-left: 10px;")
             self.active_task_label.setStyleSheet("font-size: 12px; font-weight: bold;")
             self.is_mini_mode = True
         else:
-            # Exit mini mode
             self.setMinimumSize(0, 0)
             self.setMaximumSize(16777215, 16777215)
             self.resize(500, 400)
-            
+
             self.task_input.show()
             self.task_list.show()
             self.add_btn.show()
@@ -311,28 +393,24 @@ class TaskManager(QWidget):
             self.pause_btn.show()
             self.export_btn.show()
             self.mini_mode_btn.show()
-            
-            # Recreate layout as vertical
+
             old_layout = self.compact_panel.layout()
             if old_layout:
-                # Remove widgets from layout but don't delete them
                 while old_layout.count():
                     item = old_layout.takeAt(0)
                     if item.widget():
                         item.widget().setParent(None)
-                # Delete the old layout
                 QWidget().setLayout(old_layout)
-            
+
             new_layout = QVBoxLayout(self.compact_panel)
             new_layout.addWidget(self.active_task_label)
             new_layout.addWidget(self.timer_label)
-            
+
             self.timer_label.setStyleSheet("font-size: 24px;")
             self.active_task_label.setStyleSheet("font-size: 14px; font-weight: bold;")
             self.active_task_label.setAlignment(Qt.AlignCenter)
             self.timer_label.setAlignment(Qt.AlignCenter)
             self.is_mini_mode = False
-
 
     def mouseDoubleClickEvent(self, event):
         if self.is_mini_mode:
@@ -350,7 +428,7 @@ class TaskManager(QWidget):
     def save_settings(self):
         try:
             with open(SETTINGS_FILE, "w") as f:
-                json.dump(self.settings, f)
+                json.dump(self.settings, f, indent=4)
         except Exception as e:
             QMessageBox.warning(self, "Fout", f"Kon instellingen niet opslaan:\n{e}")
 
