@@ -267,7 +267,8 @@ class TaskManager(QWidget):
     def toggle_mini_mode(self):
         if not self.is_mini_mode:
             # Enter mini mode
-            self.setFixedSize(250, 60)
+            self.setFixedSize(300, 80)
+            self.task_input.hide()
             self.task_list.hide()
             self.add_btn.hide()
             self.remove_btn.hide()
@@ -275,14 +276,33 @@ class TaskManager(QWidget):
             self.start_btn.hide()
             self.pause_btn.hide()
             self.export_btn.hide()
-            # Make mini mode horizontal layout
-            self.compact_panel.layout().setDirection(QVBoxLayout.LeftToRight)
-            self.timer_label.setStyleSheet("font-size: 16px;")
+            self.mini_mode_btn.hide()
+            
+            # Recreate layout as horizontal
+            old_layout = self.compact_panel.layout()
+            if old_layout:
+                # Remove widgets from layout but don't delete them
+                while old_layout.count():
+                    item = old_layout.takeAt(0)
+                    if item.widget():
+                        item.widget().setParent(None)
+                # Delete the old layout
+                QWidget().setLayout(old_layout)
+            
+            new_layout = QHBoxLayout(self.compact_panel)
+            new_layout.addWidget(self.active_task_label)
+            new_layout.addWidget(self.timer_label)
+            
+            self.timer_label.setStyleSheet("font-size: 16px; margin-left: 10px;")
             self.active_task_label.setStyleSheet("font-size: 12px; font-weight: bold;")
             self.is_mini_mode = True
         else:
             # Exit mini mode
-            self.setFixedSize(500, 400)
+            self.setMinimumSize(0, 0)
+            self.setMaximumSize(16777215, 16777215)
+            self.resize(500, 400)
+            
+            self.task_input.show()
             self.task_list.show()
             self.add_btn.show()
             self.remove_btn.show()
@@ -290,9 +310,27 @@ class TaskManager(QWidget):
             self.start_btn.show()
             self.pause_btn.show()
             self.export_btn.show()
-            self.compact_panel.layout().setDirection(QVBoxLayout.TopToBottom)
+            self.mini_mode_btn.show()
+            
+            # Recreate layout as vertical
+            old_layout = self.compact_panel.layout()
+            if old_layout:
+                # Remove widgets from layout but don't delete them
+                while old_layout.count():
+                    item = old_layout.takeAt(0)
+                    if item.widget():
+                        item.widget().setParent(None)
+                # Delete the old layout
+                QWidget().setLayout(old_layout)
+            
+            new_layout = QVBoxLayout(self.compact_panel)
+            new_layout.addWidget(self.active_task_label)
+            new_layout.addWidget(self.timer_label)
+            
             self.timer_label.setStyleSheet("font-size: 24px;")
             self.active_task_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+            self.active_task_label.setAlignment(Qt.AlignCenter)
+            self.timer_label.setAlignment(Qt.AlignCenter)
             self.is_mini_mode = False
 
 

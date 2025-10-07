@@ -1,5 +1,9 @@
 grind_env/
 data/
 images/
+build/
+dist/
 __pycache__/
 *.pyc
+*.png
+
