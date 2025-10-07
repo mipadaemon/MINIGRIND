@@ -89,7 +89,7 @@ class SettingsDialog(QDialog):
 class TaskManager(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Mini Grindstone - Stable macOS")
+        self.setWindowTitle("MiniGrind - by MipADeV")
         self.resize(500, 400)
 
         self.tasks = []
