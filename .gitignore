@@ -1,9 +1,20 @@
-grind_env/
-data/
-images/
-build/
-dist/
-__pycache__/
+# Ignore all .log files in the main (root) folder
+/*.log
+
+# Ignore all .tmp files in the main (root) folder
+/*.tmp
+
+# Ignore dist and build subfolders inside the code folder
+code/dist/
+code/build/
+
+# Ignore the entire data folder in the main (root) folder
+/data/
+
+# Ignore settings.json in the main (root) folder
+/settings.json
+
+/__pycache__/
 *.pyc
 *.png
-
+*.spec
