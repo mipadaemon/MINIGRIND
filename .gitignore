@@ -8,7 +8,8 @@
 code/dist/
 code/build/
 
-# Ignore the entire data folder in the main (root) folder
+# Ignore the entire folder(s) in the main (root) folder
+/.venv/
 /data/
 
 # Ignore settings.json in the main (root) folder
