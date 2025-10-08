@@ -24,13 +24,19 @@ MiniGrind is a lightweight and user-friendly **task and time tracking applicatio
 - Settings Dialog with predefined tasks
   <img width="1024" height="980" alt="image" src="https://github.com/user-attachments/assets/f5ef79f1-d822-435f-a6c3-6c3b8aea27db" />
 ---
+## Start the application
+There is a windows executable [MiniGrid_vx.y.z.exe] for download in the releases section --> [Download the latest version](../../releases/latest)
+
+Just download/save it to a directory of your liking, and run it from there.
+
+Another way is to clone the repo and run the main.py (see Installation information below)
 
 ## Installation
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/MiniGrind.git
+git clone https://github.com/mipadaemon/MiniGrind.git
 cd MiniGrind
 ```
 2. Create a virtual environment (optional but recommended):
@@ -63,10 +69,9 @@ File Structure
 MiniGrind/
 │
 ├─ main.py               # Main application
-├─ settings.json         # Persistent user settings (auto-generated)
+├─ settings.json         # Persistent user settings (auto-generated on first use)
 ├─ README.md             # This file
-├─ requirements.txt      # Python dependencies
-└─ assets/               # Optional: icons or screenshots
+└─ requirements.txt      # Python dependencies
 ```
 License
 This project is licensed under the MIT License. See LICENSE for details.
