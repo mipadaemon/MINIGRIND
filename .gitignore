@@ -2,10 +2,7 @@
 code/dist/
 code/build/
 
-# Ignore the entire folder(s) in the main (root) folder
-data/
-
-# Ignore settings.json
+# Ignore settings.json, will be created by the user
 settings.json
 
 # Ignore files by pattern
