@@ -73,9 +73,13 @@ MiniGrind/
 ├─ README.md             # This file
 └─ requirements.txt      # Python dependencies
 ```
-License
-This project is licensed under the MIT License. See LICENSE for details.
+## 🧾 License
+
+This project is licensed under the [GNU GPL v3 License](LICENSE).  
+You’re free to use, modify, and distribute this code — but derivatives must remain open source and credit the original author.
 
 Contact
-Developed by MipADeV
+
+Developed by MipadaemoN - MipADeV
+
 Feel free to open issues, fork, or contribute!
