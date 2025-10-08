@@ -1,22 +1,38 @@
-# Ignore all .log files in the main (root) folder
-/*.log
-
-# Ignore all .tmp files in the main (root) folder
-/*.tmp
-
 # Ignore dist and build subfolders inside the code folder
 code/dist/
 code/build/
 
 # Ignore the entire folder(s) in the main (root) folder
-/.venv/
-/data/
+data/
 
-# Ignore settings.json in the main (root) folder
-/settings.json
+# Ignore settings.json
+settings.json
 
-/__pycache__/
-*.pyc
+# Ignore files by pattern
 *.png
+*.tmp
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+
+# Build / distribution
+build/
+dist/
 *.spec
 version_info.txt
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
