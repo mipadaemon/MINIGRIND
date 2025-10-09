@@ -1,3 +1,7 @@
+# Ignore folders
+images/
+helpers/
+
 # Ignore dist and build subfolders inside the code folder
 code/dist/
 code/build/
