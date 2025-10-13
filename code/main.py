@@ -45,6 +45,10 @@ class Task:
         elapsed = self.get_elapsed()
         h, m, s = elapsed // 3600, (elapsed % 3600) // 60, elapsed % 60
         return f"{h:02d}:{m:02d}:{s:02d}"
+    
+    def get_task_date(self):
+        task_date = datetime.fromtimestamp(self.start_time) if self.start_time else datetime.now()
+        return task_date.strftime("%a, %d.%m.%Y")
 
 # --------------------- Settings Dialog ---------------------
 class SettingsDialog(QDialog):
@@ -309,9 +313,9 @@ class TaskManager(QWidget):
         try:
             with open(full_path, "w", newline="") as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(["Taak", "Tijd (HH:MM:SS)"])
+                writer.writerow(["Datum", "Taak", "Tijd (HH:MM:SS)"])
                 for task in self.tasks:
-                    writer.writerow([task.name, task.get_time_str()])
+                    writer.writerow([task.get_task_date(), task.name, task.get_time_str()])
             QMessageBox.information(self, "Exporteren", f"CSV opgeslagen als:\n{full_path}")
         except Exception as e:
             QMessageBox.warning(self, "Fout", f"Kon CSV niet opslaan:\n{e}")
