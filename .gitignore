@@ -13,6 +13,7 @@ settings.json
 *.png
 *.tmp
 *.log
+*.csv
 
 # Python
 __pycache__/
