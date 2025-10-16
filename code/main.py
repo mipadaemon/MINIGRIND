@@ -4,6 +4,7 @@ import csv
 import json
 import os
 from datetime import datetime
+from PySide6 import QtGui
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
     QLabel, QListWidget, QAbstractItemView, QMessageBox, QDialog, QComboBox,
@@ -12,9 +13,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor
 
+VERSION_NUMBER = "0.0.4_beta"
 SETTINGS_FILE = "settings.json"
-WEEKDAYS = ["maandag", "dinsdag", "woensdag", "donderdag",
-            "vrijdag", "zaterdag", "zondag"]
+WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday",
+            "friday", "saturday", "sunday"]
+
 
 # --------------------- Task ---------------------
 class Task:
@@ -45,16 +48,17 @@ class Task:
         elapsed = self.get_elapsed()
         h, m, s = elapsed // 3600, (elapsed % 3600) // 60, elapsed % 60
         return f"{h:02d}:{m:02d}:{s:02d}"
-    
+
     def get_task_date(self):
         task_date = datetime.fromtimestamp(self.start_time) if self.start_time else datetime.now()
         return task_date.strftime("%a, %d.%m.%Y")
+
 
 # --------------------- Settings Dialog ---------------------
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, current_folder="", current_theme="System", predefined_tasks=None, auto_load_predefined=True):
         super().__init__(parent)
-        self.setWindowTitle("Instellingen")
+        self.setWindowTitle("Settings")
         self.setModal(True)
         self.resize(400, 350)
 
@@ -68,13 +72,12 @@ class SettingsDialog(QDialog):
         # ---- Export folder ----
         folder_layout = QHBoxLayout()
         self.folder_input = QLineEdit(self.export_folder)
-        self.browse_btn = QPushButton("Bladeren...")
+        self.browse_btn = QPushButton("Browse...")
         folder_layout.addWidget(self.folder_input)
         folder_layout.addWidget(self.browse_btn)
         layout.addLayout(folder_layout)
         self.browse_btn.clicked.connect(self.browse_folder)
 
-        # Disable auto default behavior
         for btn in [self.browse_btn]:
             btn.setAutoDefault(False)
             btn.setDefault(False)
@@ -87,16 +90,16 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.theme_combo)
 
         # ---- Predefined tasks ----
-        layout.addWidget(QLabel("Voorgedefinieerde taken:"))
+        layout.addWidget(QLabel("Predefined tasks:"))
         self.task_list = QListWidget()
         self.task_list.addItems(self.predefined_tasks)
         layout.addWidget(self.task_list)
 
         btn_task_layout = QHBoxLayout()
         self.new_task_input = QLineEdit()
-        self.new_task_input.setPlaceholderText("Nieuwe taaknaam...")
-        self.add_task_btn = QPushButton("Toevoegen")
-        self.remove_task_btn = QPushButton("Verwijderen")
+        self.new_task_input.setPlaceholderText("New taskname...")
+        self.add_task_btn = QPushButton("Add")
+        self.remove_task_btn = QPushButton("Remove")
         btn_task_layout.addWidget(self.new_task_input)
         btn_task_layout.addWidget(self.add_task_btn)
         btn_task_layout.addWidget(self.remove_task_btn)
@@ -111,19 +114,19 @@ class SettingsDialog(QDialog):
             btn.setDefault(False)
 
         # ---- Checkbox for auto load ----
-        self.auto_load_checkbox = QCheckBox("Laad voorgedefinieerde taken automatisch bij opstarten")
+        self.auto_load_checkbox = QCheckBox("Load predefined tasks during startup")
         self.auto_load_checkbox.setChecked(self.auto_load_predefined)
         layout.addWidget(self.auto_load_checkbox)
 
         # ---- Save ----
-        self.save_btn = QPushButton("Opslaan")
+        self.save_btn = QPushButton("Save")
         layout.addWidget(self.save_btn)
         self.save_btn.clicked.connect(self.accept)
         self.save_btn.setAutoDefault(False)
         self.save_btn.setDefault(False)
 
     def browse_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Kies map")
+        folder = QFileDialog.getExistingDirectory(self, "Choose folder")
         if folder:
             self.folder_input.setText(folder)
 
@@ -146,6 +149,46 @@ class SettingsDialog(QDialog):
             "predefined_tasks": tasks,
             "auto_load_predefined": self.auto_load_checkbox.isChecked()
         }
+
+
+# --------------------- Create Afterwards Dialog ---------------------
+class CreateAfterDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Create Task Afterwards")
+        self.setModal(True)
+        self.resize(300, 150)
+
+        layout = QFormLayout(self)
+
+        self.task_name_input = QLineEdit()
+        self.task_name_input.setPlaceholderText("Task name")
+
+        self.minutes_input = QLineEdit()
+        self.minutes_input.setPlaceholderText("Time spent (minutes)")
+        self.minutes_input.setValidator(QtGui.QIntValidator(1, 10000))
+
+        layout.addRow("Task name:", self.task_name_input)
+        layout.addRow("Minutes spent:", self.minutes_input)
+
+        btn_layout = QHBoxLayout()
+        self.ok_btn = QPushButton("OK")
+        self.cancel_btn = QPushButton("Cancel")
+        btn_layout.addWidget(self.ok_btn)
+        btn_layout.addWidget(self.cancel_btn)
+        layout.addRow(btn_layout)
+
+        self.ok_btn.clicked.connect(self.accept)
+        self.cancel_btn.clicked.connect(self.reject)
+
+    def get_data(self):
+        name = self.task_name_input.text().strip()
+        try:
+            minutes = int(self.minutes_input.text())
+        except ValueError:
+            minutes = 0
+        return name, minutes
+
 
 # --------------------- Task Manager ---------------------
 class TaskManager(QWidget):
@@ -177,13 +220,12 @@ class TaskManager(QWidget):
         # ----------------- Task input -----------------
         input_layout = QHBoxLayout()
         self.task_input = QLineEdit()
-        self.task_input.setPlaceholderText("Nieuwe taak...")
-        self.add_btn = QPushButton("Toevoegen")
-        self.remove_btn = QPushButton("Verwijderen")
+        self.task_input.setPlaceholderText("New task...")
+        self.add_btn = QPushButton("Add")
+        self.remove_btn = QPushButton("Remove")
 
-        # ⚙️ Settings button (Unicode gear)
         self.settings_btn = QPushButton("⚙️")
-        self.settings_btn.setToolTip("Instellingen")
+        self.settings_btn.setToolTip("Settings")
         self.settings_btn.setFixedWidth(35)
 
         input_layout.addWidget(self.task_input)
@@ -199,14 +241,19 @@ class TaskManager(QWidget):
 
         # ----------------- Control buttons -----------------
         btn_layout = QHBoxLayout()
-        self.start_btn = QPushButton("Start / Hervat")
-        self.pause_btn = QPushButton("Pauzeer")
-        self.export_btn = QPushButton("Exporteer CSV")
+        self.start_btn = QPushButton("Start / Resume")
+        self.pause_btn = QPushButton("Pauze")
+        self.create_after_btn = QPushButton("Quick Task")
+        self.export_btn = QPushButton("Export CSV")
         self.mini_mode_btn = QPushButton("Mini Mode")
+        self.show_about_btn = QPushButton("About")
+
         btn_layout.addWidget(self.start_btn)
         btn_layout.addWidget(self.pause_btn)
+        btn_layout.addWidget(self.create_after_btn)
         btn_layout.addWidget(self.export_btn)
         btn_layout.addWidget(self.mini_mode_btn)
+        btn_layout.addWidget(self.show_about_btn)
         self.layout.addLayout(btn_layout)
 
         # ----------------- Connections -----------------
@@ -217,8 +264,10 @@ class TaskManager(QWidget):
         self.start_btn.clicked.connect(self.start_task)
         self.pause_btn.clicked.connect(self.pause_task)
         self.export_btn.clicked.connect(self.export_csv)
+        self.create_after_btn.clicked.connect(self.create_afterwards)
         self.task_list.itemSelectionChanged.connect(self.update_task_highlight)
         self.mini_mode_btn.clicked.connect(self.toggle_mini_mode)
+        self.show_about_btn.clicked.connect(self.show_about)
 
         self.is_mini_mode = False
 
@@ -229,7 +278,6 @@ class TaskManager(QWidget):
 
         self.apply_theme(self.settings.get("theme", "System"))
 
-        # Load predefined tasks (if enabled)
         if self.settings.get("auto_load_predefined", True):
             self.load_predefined_tasks()
 
@@ -247,8 +295,8 @@ class TaskManager(QWidget):
         if not selected_item:
             return
         reply = QMessageBox.question(
-            self, "Bevestigen",
-            f"Weet je zeker dat je '{selected_item.text()}' wilt verwijderen?",
+            self, "Please confirm",
+            f"Are you sure you want to remove '{selected_item.text()}'?",
             QMessageBox.Yes | QMessageBox.No
         )
         if reply == QMessageBox.Yes:
@@ -277,6 +325,31 @@ class TaskManager(QWidget):
             self.current_task.pause()
             self.current_task = None
             self.update_task_highlight()
+
+    # ----------------- Create Afterwards -----------------
+    def create_afterwards(self):
+        dlg = CreateAfterDialog(self)
+        if dlg.exec() == QDialog.Accepted:
+            name, minutes = dlg.get_data()
+            if not name:
+                QMessageBox.warning(self, "Missing Name", "Please enter a task name.")
+                return
+            if minutes <= 0:
+                QMessageBox.warning(self, "Invalid Time", "Please enter a positive number of minutes.")
+                return
+            if any(t.name == name for t in self.tasks):
+                QMessageBox.warning(self, "Duplicate Task", "A task with this name already exists.")
+                return
+
+            task = Task(name)
+            task.total_seconds = minutes * 60
+            self.tasks.append(task)
+            self.task_list.addItem(task.name)
+            QMessageBox.information(self, "Task Added", f"Added task '{name}' with {minutes} minutes logged.")
+
+    # ----------------- About dialog -----------------
+    def show_about(self):
+        QMessageBox.information(self, "About MiniGrind", f"MiniGrind - {VERSION_NUMBER}\nby MipADeV\n\nA simple task timer application.")
 
     # ----------------- UI updates -----------------
     def update_task_highlight(self):
@@ -366,6 +439,7 @@ class TaskManager(QWidget):
             self.start_btn.hide()
             self.pause_btn.hide()
             self.export_btn.hide()
+            self.create_after_btn.hide()
             self.mini_mode_btn.hide()
 
             old_layout = self.compact_panel.layout()
@@ -396,6 +470,7 @@ class TaskManager(QWidget):
             self.start_btn.show()
             self.pause_btn.show()
             self.export_btn.show()
+            self.create_after_btn.show()
             self.mini_mode_btn.show()
 
             old_layout = self.compact_panel.layout()
@@ -435,6 +510,7 @@ class TaskManager(QWidget):
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
             QMessageBox.warning(self, "Fout", f"Kon instellingen niet opslaan:\n{e}")
+
 
 # --------------------- Run Application ---------------------
 if __name__ == "__main__":
