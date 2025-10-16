@@ -14,6 +14,8 @@ settings.json
 *.tmp
 *.log
 *.csv
+*.txt
+test.py
 
 # Python
 __pycache__/
