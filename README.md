@@ -20,12 +20,19 @@ MiniGrind is a lightweight and user-friendly **task and time tracking applicatio
 ## Screenshots
 
 - Main Task Manager
+  <p align="center">
   <img width="760" height="540" alt="image" src="https://github.com/user-attachments/assets/a7d53995-da1a-43b4-92a3-dd12e4fceda3" />
+  </p>
+  
 - Settings Dialog with predefined tasks
+  <p align="center">
   <img width="512" height="490" alt="image" src="https://github.com/user-attachments/assets/f0de92d3-af80-49e5-8cee-ce8a31688d2c" />
+  </p>
+  
 - Quick Tasks
+  <p align="center">
   <img width="412" height="290" alt="image" src="https://github.com/user-attachments/assets/5d8c8127-a04f-4a17-93e9-a4798eb78885" />
-
+  </p>
 
 ---
 ## Start the application
