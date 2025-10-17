@@ -20,9 +20,13 @@ MiniGrind is a lightweight and user-friendly **task and time tracking applicatio
 ## Screenshots
 
 - Main Task Manager
-  <img width="1224" height="1080" alt="image" src="https://github.com/user-attachments/assets/b9fa9142-75ba-4c81-8a95-d747e1f5aaff" />
+  <img width="760" height="540" alt="image" src="https://github.com/user-attachments/assets/a7d53995-da1a-43b4-92a3-dd12e4fceda3" />
 - Settings Dialog with predefined tasks
-  <img width="1024" height="980" alt="image" src="https://github.com/user-attachments/assets/f5ef79f1-d822-435f-a6c3-6c3b8aea27db" />
+  <img width="512" height="490" alt="image" src="https://github.com/user-attachments/assets/f0de92d3-af80-49e5-8cee-ce8a31688d2c" />
+- Quick Tasks
+  <img width="412" height="290" alt="image" src="https://github.com/user-attachments/assets/5d8c8127-a04f-4a17-93e9-a4798eb78885" />
+
+
 ---
 ## Start the application
 There is a windows executable [MiniGrid_vx.y.z.exe] for download in the releases section --> [Download the latest version](../../releases/latest)
